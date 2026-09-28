@@ -30,6 +30,20 @@ const FIELD_GROUPS = [
 const ALL_FIELDS = FIELD_GROUPS.flatMap(group => group.fields);
 const FIELD_BY_KEY = Object.fromEntries(ALL_FIELDS.map(field => [field.key, field]));
 
+const LABEL_FIELDS = [
+  { key: 'producer', label: 'Produtor / vinícola', type: 'text', placeholder: 'Ex.: Bodega Catena Zapata' },
+  { key: 'wineName', label: 'Nome do vinho / rótulo', type: 'text', placeholder: 'Ex.: DV Catena Malbec-Malbec' },
+  { key: 'country', label: 'País', type: 'select', options: ['Brasil', 'Argentina', 'Chile', 'Uruguai', 'França', 'Itália', 'Portugal', 'Espanha', 'Estados Unidos', 'África do Sul', 'Austrália', 'Nova Zelândia', 'Outro'] },
+  { key: 'region', label: 'Região', type: 'text', placeholder: 'Ex.: Mendoza' },
+  { key: 'subregion', label: 'Sub-região / denominação', type: 'text', placeholder: 'Ex.: Luján de Cuyo, DOC, AOC…' },
+  { key: 'vintage', label: 'Safra', type: 'text', inputmode: 'numeric', placeholder: 'Ex.: 2020 ou NV' },
+  { key: 'alcohol', label: 'Teor alcoólico', type: 'number', step: '0.1', min: '0', max: '25', placeholder: 'Ex.: 13,5' },
+  { key: 'grapes', label: 'Uvas / corte', type: 'text', placeholder: 'Ex.: 80% Malbec, 20% Cabernet' },
+  { key: 'appellation', label: 'Classificação', type: 'text', placeholder: 'Ex.: DOC, AOC, IGP (opcional)' }
+];
+
+const LABEL_FIELD_BY_KEY = Object.fromEntries(LABEL_FIELDS.map(field => [field.key, field]));
+
 const defaultState = () => ({
   participants: [],
   history: [],
@@ -72,6 +86,10 @@ function emptyAnswers() {
   return Object.fromEntries(ALL_FIELDS.map(field => [field.key, '']));
 }
 
+function emptyLabelInfo() {
+  return Object.fromEntries(LABEL_FIELDS.map(field => [field.key, '']));
+}
+
 function esc(value = '') {
   return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
 }
@@ -104,6 +122,7 @@ function createRound() {
     ownerId,
     step: 'key',
     answerKey: emptyAnswers(),
+    labelInfo: emptyLabelInfo(),
     answers: Object.fromEntries(state.participants.filter(person => person.id !== ownerId).map(person => [person.id, emptyAnswers()])),
     startedAt: new Date().toISOString()
   };
@@ -227,7 +246,7 @@ function buildLeaderboard() {
 
 function renderHistoryCards(rounds) {
   return `<div class="history-list">${rounds.map(round => `<article class="history-card">
-    <div class="history-summary"><div><strong>Rodada ${round.number} · ${esc(round.ownerName)}</strong><span>${formatDate(round.finishedAt)} · dono do gabarito</span></div><div class="history-actions"><button class="text-button" data-action="review-round" data-id="${round.id}">Revisar</button><button class="icon-button remove" data-action="delete-round" data-id="${round.id}" aria-label="Excluir rodada ${round.number}">×</button></div></div>
+    <div class="history-summary"><div><strong>Rodada ${round.number} · ${esc(round.labelInfo?.wineName || round.ownerName)}</strong><span>${formatDate(round.finishedAt)} · ${round.labelInfo?.region ? `${esc(round.labelInfo.region)} · ` : ''}dono do gabarito: ${esc(round.ownerName)}</span></div><div class="history-actions"><button class="text-button" data-action="review-round" data-id="${round.id}">Revisar</button><button class="icon-button remove" data-action="delete-round" data-id="${round.id}" aria-label="Excluir rodada ${round.number}">×</button></div></div>
     <div class="history-detail"><table><thead><tr><th>Participante</th><th>Pontos</th></tr></thead><tbody>${(round.scores || []).map(score => `<tr><td>${esc(score.name)}</td><td>${score.score}/${score.max}</td></tr>`).join('')}</tbody></table></div>
   </article>`).join('')}</div>`;
 }
@@ -237,6 +256,7 @@ function progressSteps(active) {
     ['key', 'Gabarito'],
     ['blind', 'Às cegas'],
     ['visual', 'Visual'],
+    ['label', 'Rótulo'],
     ['results', 'Resultado']
   ];
   const current = steps.findIndex(item => item[0] === active);
@@ -248,7 +268,7 @@ function renderRoundPage(round) {
   const owner = getOwner(round);
   return `<section class="round-top"><div><div class="eyebrow">Degustação em andamento</div><h1>Rodada ${round.number}</h1><p class="lede">Uma garrafa por vez. Primeiro o palpite, depois a revelação.</p></div><div class="round-meta"><span class="round-number">${String(round.number).padStart(2, '0')}</span><span>Gabarito: <strong>${esc(owner?.name || 'escolha o dono')}</strong></span></div></section>
   ${progressSteps(round.step)}
-  <div class="round-layout"><div class="round-main">${round.step === 'key' ? renderKeyStep(round) : round.step === 'blind' ? renderBlindStep(round) : round.step === 'visual' ? renderVisualStep(round) : renderResultsStep(round)}</div><aside class="round-side">${renderRoundSide(round)}</aside></div>`;
+  <div class="round-layout"><div class="round-main">${round.step === 'key' ? renderKeyStep(round) : round.step === 'blind' ? renderBlindStep(round) : round.step === 'visual' ? renderVisualStep(round) : round.step === 'label' ? renderLabelStep(round) : renderResultsStep(round)}</div><aside class="round-side">${renderRoundSide(round)}</aside></div>`;
 }
 
 function renderRoundSide(round) {
@@ -257,7 +277,7 @@ function renderRoundSide(round) {
   const completedBlind = countCompleted(round, 'blind');
   const completedVisual = countCompleted(round, 'visual');
   return `<div class="round-card"><div class="section-label">Nesta rodada</div><h3>${eligible.length} participante${eligible.length === 1 ? '' : 's'} jogando</h3><p class="muted">${owner ? `<strong>${esc(owner.name)}</strong> serve a garrafa e guarda o gabarito.` : 'Escolha quem trouxe a garrafa.'}</p><div class="status-line"><span>Palpites preenchidos</span><strong>${round.step === 'key' ? '—' : `${completedBlind}/${eligible.length}`}</strong></div><div class="status-meter"><i style="width:${eligible.length ? Math.round((completedBlind / eligible.length) * 100) : 0}%"></i></div><div class="status-line"><span>Visual preenchido</span><strong>${round.step === 'visual' || round.step === 'results' ? `${completedVisual}/${eligible.length}` : '—'}</strong></div><div class="status-meter"><i style="width:${eligible.length ? Math.round((completedVisual / eligible.length) * 100) : 0}%"></i></div></div>
-  <div class="callout"><strong>Dica de condução</strong>${round.step === 'key' ? 'O dono preenche o gabarito antes de servir. Não mostre esta tela aos convidados.' : round.step === 'blind' ? 'Passe a tela para cada pessoa ou registre as respostas em sentido horário.' : round.step === 'visual' ? 'Agora todos tiram as vendas. Compare a cor e a limpidez com a taça.' : 'Cada ponto vale um acerto contra o gabarito. O dono não entra nesta conta.'}</div>`;
+  <div class="callout"><strong>Dica de condução</strong>${round.step === 'key' ? 'O dono preenche o gabarito antes de servir. Não mostre esta tela aos convidados.' : round.step === 'blind' ? 'Passe a tela para cada pessoa ou registre as respostas em sentido horário.' : round.step === 'visual' ? 'Agora todos tiram as vendas. Compare a cor e a limpidez com a taça.' : round.step === 'label' ? 'Com o rótulo em mãos, complete a ficha da garrafa. Essas informações não alteram o placar.' : 'Cada ponto vale um acerto contra o gabarito. O dono não entra nesta conta.'}</div>`;
 }
 
 function countCompleted(round, groupKey) {
@@ -288,7 +308,28 @@ function renderBlindStep(round) {
 }
 
 function renderVisualStep(round) {
-  return `<article class="round-card"><div class="phase-header"><div><div class="section-label">Etapa 2 · depois da revelação</div><h2>Agora, olhem a taça.</h2><p>Tirem as vendas e registrem cor, limpidez e intensidade visual.</p></div><span class="phase-pill">Revelado</span></div><div class="reveal-banner"><span class="reveal-icon">✦</span><span><strong>Rótulo revelado.</strong> Continuem a análise usando a luz e a cor do vinho.</span></div>${renderBoard(round, 'visual', false)}<div class="round-actions"><div class="left-actions"><button class="secondary-button" data-action="back-blind">← Voltar aos palpites</button></div><div class="right-actions"><button class="primary-button" data-action="to-results">Corrigir e mostrar resultado <span aria-hidden="true">→</span></button></div></div></article>`;
+  return `<article class="round-card"><div class="phase-header"><div><div class="section-label">Etapa 2 · depois da revelação</div><h2>Agora, olhem a taça.</h2><p>Tirem as vendas e registrem cor, limpidez e intensidade visual.</p></div><span class="phase-pill">Revelado</span></div><div class="reveal-banner"><span class="reveal-icon">✦</span><span><strong>Rótulo revelado.</strong> Continuem a análise usando a luz e a cor do vinho.</span></div>${renderBoard(round, 'visual', false)}<div class="round-actions"><div class="left-actions"><button class="secondary-button" data-action="back-blind">← Voltar aos palpites</button></div><div class="right-actions"><button class="primary-button" data-action="to-label">Registrar ficha do rótulo <span aria-hidden="true">→</span></button></div></div></article>`;
+}
+
+function renderLabelStep(round) {
+  const info = { ...emptyLabelInfo(), ...(round.labelInfo || {}) };
+  return `<article class="round-card"><div class="phase-header"><div><div class="section-label">Etapa 3 · ficha da garrafa</div><h2>Agora, o rótulo conta a história.</h2><p>Registrem as informações da garrafa para lembrar da descoberta depois. Esta ficha não altera a pontuação.</p></div><span class="phase-pill">Rótulo</span></div><div class="reveal-banner"><span class="reveal-icon">⌁</span><span><strong>Dados do rótulo.</strong> Preencha o que fizer sentido; campos sem informação podem ficar em branco.</span></div><div class="label-form-grid">${LABEL_FIELDS.map(field => `<label class="label-field ${['producer', 'wineName', 'grapes'].includes(field.key) ? 'wide' : ''}"><span>${esc(field.label)}</span>${renderLabelControl(field, info[field.key])}</label>`).join('')}</div><div class="round-actions"><div class="left-actions"><button class="secondary-button" data-action="back-visual">← Voltar ao visual</button></div><div class="right-actions"><button class="primary-button" data-action="to-results">Ver resultado da rodada <span aria-hidden="true">→</span></button></div></div><p class="save-note">A ficha é salva junto da rodada e aparece no histórico. Você pode deixar campos em branco quando o rótulo não trouxer a informação.</p></article>`;
+}
+
+function renderLabelControl(field, value) {
+  if (field.type === 'select') {
+    return `<select class="answer-select label-input" data-label data-field="${field.key}"><option value="">Escolher…</option>${field.options.map(option => `<option value="${esc(option)}" ${option === value ? 'selected' : ''}>${esc(option)}</option>`).join('')}</select>`;
+  }
+  return `<input class="input label-input" data-label data-field="${field.key}" type="${field.type}" ${field.inputmode ? `inputmode="${field.inputmode}"` : ''} ${field.step ? `step="${field.step}"` : ''} ${field.min ? `min="${field.min}"` : ''} ${field.max ? `max="${field.max}"` : ''} value="${esc(value || '')}" placeholder="${esc(field.placeholder || '')}" />`;
+}
+
+function hasLabelInfo(info) {
+  return Object.values(info || {}).some(value => String(value || '').trim());
+}
+
+function renderLabelSnapshot(info) {
+  if (!hasLabelInfo(info)) return `<div class="label-empty"><strong>Ficha do rótulo ainda vazia.</strong><span>A rodada pode ser salva mesmo assim; complete a ficha na próxima taça.</span></div>`;
+  return `<section class="label-snapshot"><div><div class="section-label">Ficha do rótulo</div><h3>${esc(info.wineName || info.producer || 'Garrafa revelada')}</h3>${info.producer && info.wineName ? `<p>${esc(info.producer)}</p>` : ''}</div><div class="label-chips">${LABEL_FIELDS.filter(field => info[field.key] && field.key !== 'wineName' && field.key !== 'producer').map(field => `<span class="label-chip"><small>${esc(field.label)}</small>${esc(field.key === 'alcohol' ? `${info[field.key]}%` : info[field.key])}</span>`).join('')}</div></section>`;
 }
 
 function renderBoard(round, groupKey, showKey) {
@@ -304,7 +345,7 @@ function renderKeyValue(value) {
 function renderResultsStep(round) {
   const result = calculateRound(round);
   const winner = [...result.scores].sort((a, b) => b.score - a.score)[0];
-  return `<article class="round-card"><div class="result-hero"><div class="eyebrow">Etapa 4 · hora da verdade</div><h2>${winner ? `${esc(winner.name)} puxou a fila.` : 'A mesa chegou ao veredito.'}</h2><p>${winner ? `${winner.score} acerto${winner.score === 1 ? '' : 's'} em ${winner.max} critérios. Agora é só salvar a rodada.` : 'Confira os palpites antes de registrar o resultado.'}</p></div><div class="result-cards">${result.scores.map(score => `<div class="result-card ${winner && score.id === winner.id ? 'leader' : ''}"><div class="result-name">${esc(score.name)}</div><div class="result-points">${score.score}<small>/${score.max}</small></div><div class="result-status">${Math.round((score.score / score.max) * 100)}% de acerto</div></div>`).join('')}</div><div class="detail-block">${result.scores.map(score => renderDetailPerson(score)).join('')}</div><div class="round-actions"><div class="left-actions"><button class="secondary-button" data-action="back-visual">← Revisar respostas</button></div><div class="right-actions"><button class="primary-button" data-action="save-round">Salvar rodada e iniciar próxima <span aria-hidden="true">→</span></button></div></div></article>`;
+  return `<article class="round-card"><div class="result-hero"><div class="eyebrow">Etapa 5 · hora da verdade</div><h2>${winner ? `${esc(winner.name)} puxou a fila.` : 'A mesa chegou ao veredito.'}</h2><p>${winner ? `${winner.score} acerto${winner.score === 1 ? '' : 's'} em ${winner.max} critérios. Agora é só salvar a rodada.` : 'Confira os palpites antes de registrar o resultado.'}</p></div>${renderLabelSnapshot(round.labelInfo || {})}<div class="result-cards">${result.scores.map(score => `<div class="result-card ${winner && score.id === winner.id ? 'leader' : ''}"><div class="result-name">${esc(score.name)}</div><div class="result-points">${score.score}<small>/${score.max}</small></div><div class="result-status">${Math.round((score.score / score.max) * 100)}% de acerto</div></div>`).join('')}</div><div class="detail-block">${result.scores.map(score => renderDetailPerson(score)).join('')}</div><div class="round-actions"><div class="left-actions"><button class="secondary-button" data-action="back-label">← Revisar ficha</button></div><div class="right-actions"><button class="primary-button" data-action="save-round">Salvar rodada e iniciar próxima <span aria-hidden="true">→</span></button></div></div></article>`;
 }
 
 function calculateRound(round) {
@@ -331,7 +372,7 @@ function renderHistoryPage() {
 function renderReviewPage() {
   const round = state.history.find(item => item.id === reviewId);
   if (!round) return renderHistoryPage();
-  return `<section class="review-head"><div><div class="eyebrow">Rodada ${round.number} · revisão</div><h1>O que a taça revelou.</h1><p>Gabarito de <strong>${esc(round.ownerName)}</strong> · ${formatDate(round.finishedAt)}</p></div><button class="secondary-button" data-action="open-history">← Voltar ao histórico</button></section><section class="panel"><div class="section-label">Gabarito oficial</div><h2>Respostas da garrafa</h2><div class="review-key">${ALL_FIELDS.map(field => `<div class="review-key-item"><small>${esc(field.short)}</small><strong>${esc(round.answerKey[field.key] || 'Sem resposta')}</strong></div>`).join('')}</div>${(round.scores || []).map(score => renderDetailPerson(score)).join('')}</section>`;
+  return `<section class="review-head"><div><div class="eyebrow">Rodada ${round.number} · revisão</div><h1>O que a taça revelou.</h1><p>Gabarito de <strong>${esc(round.ownerName)}</strong> · ${formatDate(round.finishedAt)}</p></div><button class="secondary-button" data-action="open-history">← Voltar ao histórico</button></section><section class="panel">${renderLabelSnapshot(round.labelInfo || {})}<div class="section-label">Gabarito oficial</div><h2>Respostas da garrafa</h2><div class="review-key">${ALL_FIELDS.map(field => `<div class="review-key-item"><small>${esc(field.short)}</small><strong>${esc(round.answerKey[field.key] || 'Sem resposta')}</strong></div>`).join('')}</div>${(round.scores || []).map(score => renderDetailPerson(score)).join('')}</section>`;
 }
 
 function isComplete(round, scope, participantId = null) {
@@ -404,6 +445,12 @@ function handleChange(event) {
     showToast(`${participantName(target.value)} agora guarda o gabarito.`);
     return;
   }
+  if (target.matches('[data-label]') && state.currentRound) {
+    state.currentRound.labelInfo ||= emptyLabelInfo();
+    state.currentRound.labelInfo[target.dataset.field] = target.value;
+    saveState();
+    return;
+  }
   if (!target.matches('[data-answer]') || !state.currentRound) return;
   const scope = target.dataset.scope;
   const field = target.dataset.field;
@@ -456,11 +503,13 @@ function handleClick(event) {
     goToStep('visual'); return;
   }
   if (action === 'back-blind') { goToStep('blind'); return; }
-  if (action === 'to-results') {
-    if (!allParticipantsComplete(state.currentRound, 'visual')) { showToast('Complete a análise visual de todos antes de corrigir.', 'error'); return; }
-    goToStep('results'); return;
+  if (action === 'to-label') {
+    if (!allParticipantsComplete(state.currentRound, 'visual')) { showToast('Complete a análise visual de todos antes de revelar a ficha.', 'error'); return; }
+    goToStep('label'); return;
   }
+  if (action === 'to-results') { goToStep('results'); return; }
   if (action === 'back-visual') { goToStep('visual'); return; }
+  if (action === 'back-label') { goToStep('label'); return; }
   if (action === 'save-round') { saveRound(); return; }
   if (action === 'delete-round') { deleteRound(id); return; }
   if (action === 'reset-game') { resetGame(); return; }
