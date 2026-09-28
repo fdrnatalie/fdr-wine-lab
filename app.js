@@ -30,19 +30,60 @@ const FIELD_GROUPS = [
 const ALL_FIELDS = FIELD_GROUPS.flatMap(group => group.fields);
 const FIELD_BY_KEY = Object.fromEntries(ALL_FIELDS.map(field => [field.key, field]));
 
-const LABEL_FIELDS = [
-  { key: 'producer', label: 'Produtor / vinícola', type: 'text', placeholder: 'Ex.: Bodega Catena Zapata' },
-  { key: 'wineName', label: 'Nome do vinho / rótulo', type: 'text', placeholder: 'Ex.: DV Catena Malbec-Malbec' },
-  { key: 'country', label: 'País', type: 'select', options: ['Brasil', 'Argentina', 'Chile', 'Uruguai', 'França', 'Itália', 'Portugal', 'Espanha', 'Estados Unidos', 'África do Sul', 'Austrália', 'Nova Zelândia', 'Outro'] },
-  { key: 'region', label: 'Região', type: 'text', placeholder: 'Ex.: Mendoza' },
-  { key: 'subregion', label: 'Sub-região / denominação', type: 'text', placeholder: 'Ex.: Luján de Cuyo, DOC, AOC…' },
-  { key: 'vintage', label: 'Safra', type: 'text', inputmode: 'numeric', placeholder: 'Ex.: 2020 ou NV' },
-  { key: 'alcohol', label: 'Teor alcoólico', type: 'number', step: '0.1', min: '0', max: '25', placeholder: 'Ex.: 13,5' },
-  { key: 'grapes', label: 'Uvas / corte', type: 'text', placeholder: 'Ex.: 80% Malbec, 20% Cabernet' },
-  { key: 'appellation', label: 'Classificação', type: 'text', placeholder: 'Ex.: DOC, AOC, IGP (opcional)' }
+// Curadoria rápida baseada em referências gerais de regiões vitivinícolas e variedades
+// internacionais; as listas podem ser ampliadas sem mudar o modelo de pontuação.
+const WINE_COUNTRIES = ['Brasil', 'Argentina', 'Chile', 'Uruguai', 'França', 'Itália', 'Portugal', 'Espanha', 'Estados Unidos', 'África do Sul', 'Austrália', 'Nova Zelândia', 'Alemanha', 'Áustria', 'Outro / não sei'];
+const WINE_REGIONS = [
+  'Brasil · Serra Gaúcha', 'Brasil · Campanha Gaúcha', 'Brasil · Vale do São Francisco',
+  'Argentina · Mendoza', 'Argentina · Salta', 'Argentina · Patagônia',
+  'Chile · Valle Central', 'Chile · Aconcagua', 'Chile · Coquimbo', 'Chile · Região Sul',
+  'Uruguai · Canelones', 'Uruguai · Maldonado', 'Uruguai · Colonia',
+  'França · Bordeaux', 'França · Borgonha', 'França · Champagne', 'França · Vale do Loire', 'França · Rhône', 'França · Alsácia', 'França · Provence',
+  'Itália · Toscana', 'Itália · Piemonte', 'Itália · Veneto', 'Itália · Sicília', 'Itália · Vêneto',
+  'Portugal · Douro', 'Portugal · Vinho Verde', 'Portugal · Alentejo', 'Portugal · Dão', 'Portugal · Setúbal',
+  'Espanha · Rioja', 'Espanha · Ribera del Duero', 'Espanha · Rueda', 'Espanha · Priorat', 'Espanha · Galícia',
+  'Estados Unidos · Califórnia', 'Estados Unidos · Oregon', 'Estados Unidos · Washington',
+  'África do Sul · Western Cape', 'Austrália · South Australia', 'Austrália · Victoria', 'Austrália · Western Australia',
+  'Nova Zelândia · Marlborough', 'Nova Zelândia · Central Otago', 'Alemanha · Mosel', 'Áustria · Niederösterreich'
 ];
+const WINE_SUBREGIONS = [
+  'Brasil · Vale dos Vinhedos', 'Brasil · Pinto Bandeira', 'Brasil · Flores da Cunha',
+  'Argentina · Luján de Cuyo', 'Argentina · Maipú', 'Argentina · Valle de Uco', 'Argentina · Cafayate', 'Argentina · Río Negro', 'Argentina · Neuquén',
+  'Chile · Maipo', 'Chile · Colchagua', 'Chile · Casablanca', 'Chile · San Antonio', 'Chile · Cachapoal', 'Chile · Maule', 'Chile · Limarí',
+  'Uruguai · Progreso', 'Uruguai · Las Violetas', 'Uruguai · Garzón',
+  'França · Médoc', 'França · Saint-Émilion', 'França · Pomerol', 'França · Côte d’Or', 'França · Chablis', 'França · Sancerre', 'França · Châteauneuf-du-Pape', 'França · Hermitage', 'França · Bandol',
+  'Itália · Chianti', 'Itália · Montalcino', 'Itália · Barolo', 'Itália · Barbaresco', 'Itália · Valpolicella', 'Itália · Soave', 'Itália · Etna',
+  'Portugal · Douro Superior', 'Portugal · Cima Corgo', 'Portugal · Monção e Melgaço', 'Portugal · Bairrada', 'Portugal · Dão',
+  'Espanha · Rioja Alta', 'Espanha · Rioja Alavesa', 'Espanha · Ribera del Duero', 'Espanha · Rías Baixas', 'Espanha · Priorat', 'Espanha · Jerez',
+  'Estados Unidos · Napa Valley', 'Estados Unidos · Sonoma', 'Estados Unidos · Paso Robles', 'Estados Unidos · Willamette Valley', 'Estados Unidos · Columbia Valley',
+  'África do Sul · Stellenbosch', 'África do Sul · Swartland', 'Austrália · Barossa Valley', 'Austrália · McLaren Vale', 'Austrália · Yarra Valley', 'Austrália · Margaret River',
+  'Nova Zelândia · Marlborough', 'Nova Zelândia · Hawke’s Bay', 'Nova Zelândia · Central Otago', 'Alemanha · Mosel', 'Alemanha · Rheingau', 'Áustria · Wachau'
+];
+const WINE_GRAPES = [
+  'Cabernet Sauvignon', 'Merlot', 'Cabernet Franc', 'Malbec', 'Syrah / Shiraz', 'Pinot Noir', 'Carménère', 'Tannat', 'Tempranillo', 'Garnacha / Grenache', 'Sangiovese', 'Nebbiolo', 'Barbera', 'Montepulciano', 'Touriga Nacional', 'Touriga Franca', 'Pinotage', 'Zinfandel / Primitivo',
+  'Chardonnay', 'Sauvignon Blanc', 'Riesling', 'Pinot Grigio / Pinot Gris', 'Chenin Blanc', 'Viognier', 'Gewürztraminer', 'Alvarinho / Albariño', 'Verdejo', 'Torrontés', 'Moscato / Muscat', 'Trebbiano / Ugni Blanc', 'Arinto', 'Glera', 'Semillon', 'Marsanne / Roussanne', 'Outra / corte não sei'
+];
+const WINE_APPELLATIONS = ['AOC / AOP', 'DOC / DOCG', 'DOP / DOC', 'IGP / Vinho Regional', 'AVA', 'DO / DOCa', 'Indicação regional', 'Sem denominação / não sei'];
+const WINE_VINTAGES = ['NV / sem safra', ...Array.from({ length: 37 }, (_, index) => String(2026 - index))];
+const WINE_ALCOHOL_BANDS = ['Até 11,9%', '12 a 12,9%', '13 a 13,9%', '14 a 15,9%', '16% ou mais'];
 
+const LABEL_FIELDS = [
+  { key: 'producer', label: 'Produtor / vinícola', short: 'Produtor', type: 'text', placeholder: 'Ex.: Bodega Catena Zapata', scored: false },
+  { key: 'wineName', label: 'Nome do vinho / rótulo', short: 'Rótulo', type: 'text', placeholder: 'Ex.: DV Catena Malbec-Malbec', scored: false },
+  { key: 'country', label: 'País', short: 'País', type: 'select', options: WINE_COUNTRIES, scored: true },
+  { key: 'region', label: 'Região', short: 'Região', type: 'select', options: WINE_REGIONS, scored: true },
+  { key: 'subregion', label: 'Sub-região / denominação', short: 'Sub-região', type: 'select', options: WINE_SUBREGIONS, scored: true },
+  { key: 'vintage', label: 'Safra', short: 'Safra', type: 'select', options: WINE_VINTAGES, scored: true },
+  { key: 'alcohol', label: 'Teor alcoólico (%)', short: 'Álcool', type: 'number', step: '0.1', min: '0', max: '25', placeholder: 'Ex.: 13,5', scored: true },
+  { key: 'grapes', label: 'Uvas / corte', short: 'Uvas', type: 'multi', options: WINE_GRAPES, scored: true },
+  { key: 'appellation', label: 'Classificação', short: 'Classificação', type: 'select', options: WINE_APPELLATIONS, scored: true }
+];
+const LABEL_SCORE_FIELDS = LABEL_FIELDS.filter(field => field.scored);
 const LABEL_FIELD_BY_KEY = Object.fromEntries(LABEL_FIELDS.map(field => [field.key, field]));
+const DETAIL_FIELDS = {
+  ...FIELD_BY_KEY,
+  ...Object.fromEntries(LABEL_SCORE_FIELDS.map(field => [`label_${field.key}`, { ...field, short: field.short }]))
+};
 
 const defaultState = () => ({
   participants: [],
@@ -56,6 +97,59 @@ let screen = null;
 let reviewId = null;
 let toastTimer;
 
+function emptyAnswers() {
+  return Object.fromEntries(ALL_FIELDS.map(field => [field.key, '']));
+}
+
+function emptyLabelInfo() {
+  return Object.fromEntries(LABEL_FIELDS.map(field => [field.key, field.type === 'multi' ? [] : '']));
+}
+
+function emptyLabelAnswers() {
+  return Object.fromEntries(LABEL_SCORE_FIELDS.map(field => [field.key, field.type === 'multi' ? [] : '']));
+}
+
+function normalizeMulti(value) {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (!value) return [];
+  return String(value).split(/,|\/|;|\n/).map(item => item.trim()).filter(Boolean);
+}
+
+function normalizeLabelInfo(info = {}) {
+  const output = emptyLabelInfo();
+  LABEL_FIELDS.forEach(field => {
+    if (field.type === 'multi') output[field.key] = normalizeMulti(info[field.key]);
+    else output[field.key] = info[field.key] == null ? '' : String(info[field.key]);
+  });
+  return output;
+}
+
+function normalizeLabelAnswers(info = {}) {
+  const output = emptyLabelAnswers();
+  LABEL_SCORE_FIELDS.forEach(field => {
+    if (field.type === 'multi') output[field.key] = normalizeMulti(info[field.key]);
+    else output[field.key] = info[field.key] == null ? '' : String(info[field.key]);
+  });
+  return output;
+}
+
+function normalizeRound(round, participants) {
+  if (!round) return null;
+  const normalized = {
+    ...round,
+    answerKey: { ...emptyAnswers(), ...(round.answerKey || {}) },
+    labelInfo: normalizeLabelInfo(round.labelInfo || round.labelKey || {}),
+    answers: { ...(round.answers || {}) },
+    labelAnswers: { ...(round.labelAnswers || {}) }
+  };
+  const eligible = (participants || []).filter(person => person.id !== normalized.ownerId);
+  eligible.forEach(person => {
+    normalized.answers[person.id] = { ...emptyAnswers(), ...(normalized.answers[person.id] || {}) };
+    normalized.labelAnswers[person.id] = normalizeLabelAnswers(normalized.labelAnswers[person.id] || {});
+  });
+  return normalized;
+}
+
 function loadState() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -63,7 +157,9 @@ function loadState() {
     return {
       ...defaultState(),
       ...parsed,
-      nextRound: Number(parsed.nextRound) || parsed.history.length + 1
+      nextRound: Number(parsed.nextRound) || parsed.history.length + 1,
+      currentRound: normalizeRound(parsed.currentRound, parsed.participants),
+      history: parsed.history.map(round => normalizeRound(round, parsed.participants))
     };
   } catch (error) {
     return defaultState();
@@ -80,14 +176,6 @@ function saveState() {
 
 function uid(prefix = 'id') {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-}
-
-function emptyAnswers() {
-  return Object.fromEntries(ALL_FIELDS.map(field => [field.key, '']));
-}
-
-function emptyLabelInfo() {
-  return Object.fromEntries(LABEL_FIELDS.map(field => [field.key, '']));
 }
 
 function esc(value = '') {
@@ -124,13 +212,19 @@ function createRound() {
     answerKey: emptyAnswers(),
     labelInfo: emptyLabelInfo(),
     answers: Object.fromEntries(state.participants.filter(person => person.id !== ownerId).map(person => [person.id, emptyAnswers()])),
+    labelAnswers: Object.fromEntries(state.participants.filter(person => person.id !== ownerId).map(person => [person.id, emptyLabelAnswers()])),
     startedAt: new Date().toISOString()
   };
 }
 
 function ensureAnswerSlots(round) {
+  round.answerKey = { ...emptyAnswers(), ...(round.answerKey || {}) };
+  round.labelInfo = normalizeLabelInfo(round.labelInfo || {});
+  round.answers ||= {};
+  round.labelAnswers ||= {};
   getEligibleParticipants(round).forEach(person => {
-    round.answers[person.id] ||= emptyAnswers();
+    round.answers[person.id] = { ...emptyAnswers(), ...(round.answers[person.id] || {}) };
+    round.labelAnswers[person.id] = normalizeLabelAnswers(round.labelAnswers[person.id] || {});
   });
 }
 
@@ -244,6 +338,11 @@ function buildLeaderboard() {
   return Array.from(map.values()).filter(entry => entry.rounds > 0).sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, 'pt-BR'));
 }
 
+function displayValue(value) {
+  if (Array.isArray(value)) return value.length ? value.join(', ') : 'Sem resposta';
+  return value || 'Sem resposta';
+}
+
 function renderHistoryCards(rounds) {
   return `<div class="history-list">${rounds.map(round => `<article class="history-card">
     <div class="history-summary"><div><strong>Rodada ${round.number} · ${esc(round.labelInfo?.wineName || round.ownerName)}</strong><span>${formatDate(round.finishedAt)} · ${round.labelInfo?.region ? `${esc(round.labelInfo.region)} · ` : ''}dono do gabarito: ${esc(round.ownerName)}</span></div><div class="history-actions"><button class="text-button" data-action="review-round" data-id="${round.id}">Revisar</button><button class="icon-button remove" data-action="delete-round" data-id="${round.id}" aria-label="Excluir rodada ${round.number}">×</button></div></div>
@@ -276,8 +375,9 @@ function renderRoundSide(round) {
   const eligible = getEligibleParticipants(round);
   const completedBlind = countCompleted(round, 'blind');
   const completedVisual = countCompleted(round, 'visual');
-  return `<div class="round-card"><div class="section-label">Nesta rodada</div><h3>${eligible.length} participante${eligible.length === 1 ? '' : 's'} jogando</h3><p class="muted">${owner ? `<strong>${esc(owner.name)}</strong> serve a garrafa e guarda o gabarito.` : 'Escolha quem trouxe a garrafa.'}</p><div class="status-line"><span>Palpites preenchidos</span><strong>${round.step === 'key' ? '—' : `${completedBlind}/${eligible.length}`}</strong></div><div class="status-meter"><i style="width:${eligible.length ? Math.round((completedBlind / eligible.length) * 100) : 0}%"></i></div><div class="status-line"><span>Visual preenchido</span><strong>${round.step === 'visual' || round.step === 'results' ? `${completedVisual}/${eligible.length}` : '—'}</strong></div><div class="status-meter"><i style="width:${eligible.length ? Math.round((completedVisual / eligible.length) * 100) : 0}%"></i></div></div>
-  <div class="callout"><strong>Dica de condução</strong>${round.step === 'key' ? 'O dono preenche o gabarito antes de servir. Não mostre esta tela aos convidados.' : round.step === 'blind' ? 'Passe a tela para cada pessoa ou registre as respostas em sentido horário.' : round.step === 'visual' ? 'Agora todos tiram as vendas. Compare a cor e a limpidez com a taça.' : round.step === 'label' ? 'Com o rótulo em mãos, complete a ficha da garrafa. Essas informações não alteram o placar.' : 'Cada ponto vale um acerto contra o gabarito. O dono não entra nesta conta.'}</div>`;
+  const completedLabel = countLabelCompleted(round);
+  return `<div class="round-card"><div class="section-label">Nesta rodada</div><h3>${eligible.length} participante${eligible.length === 1 ? '' : 's'} jogando</h3><p class="muted">${owner ? `<strong>${esc(owner.name)}</strong> serve a garrafa e guarda o gabarito.` : 'Escolha quem trouxe a garrafa.'}</p><div class="status-line"><span>Palpites sensoriais</span><strong>${round.step === 'key' ? '—' : `${completedBlind}/${eligible.length}`}</strong></div><div class="status-meter"><i style="width:${eligible.length ? Math.round((completedBlind / eligible.length) * 100) : 0}%"></i></div><div class="status-line"><span>Análise visual</span><strong>${['visual', 'label', 'results'].includes(round.step) ? `${completedVisual}/${eligible.length}` : '—'}</strong></div><div class="status-meter"><i style="width:${eligible.length ? Math.round((completedVisual / eligible.length) * 100) : 0}%"></i></div><div class="status-line"><span>Palpite do rótulo</span><strong>${['label', 'results'].includes(round.step) ? `${completedLabel}/${eligible.length}` : '—'}</strong></div><div class="status-meter"><i style="width:${eligible.length ? Math.round((completedLabel / eligible.length) * 100) : 0}%"></i></div></div>
+  <div class="callout"><strong>Dica de condução</strong>${round.step === 'key' ? 'O dono preenche o gabarito sensorial e a ficha do rótulo antes de servir. Não mostre esta tela aos convidados.' : round.step === 'blind' ? 'Passe a tela para cada pessoa ou registre as respostas em sentido horário.' : round.step === 'visual' ? 'Agora todos tiram as vendas. Compare a cor e a limpidez com a taça; a garrafa continua coberta.' : round.step === 'label' ? 'A garrafa continua escondida: cada participante faz seu próprio palpite de país, região, safra, álcool e uvas.' : 'Agora revelem a garrafa. Cada ponto vale um acerto contra o gabarito; o dono não entra nesta conta.'}</div>`;
 }
 
 function countCompleted(round, groupKey) {
@@ -285,12 +385,20 @@ function countCompleted(round, groupKey) {
   return getEligibleParticipants(round).filter(person => fields.every(field => round.answers[person.id]?.[field.key])).length;
 }
 
+function countLabelCompleted(round) {
+  return getEligibleParticipants(round).filter(person => LABEL_SCORE_FIELDS.every(field => {
+    const value = round.labelAnswers?.[person.id]?.[field.key];
+    return field.type === 'multi' ? Array.isArray(value) && value.length > 0 : Boolean(value);
+  })).length;
+}
+
 function renderKeyStep(round) {
-  return `<article class="round-card"><div class="phase-header"><div><div class="section-label">Etapa de preparação</div><h2>Feche o rótulo. Abra os sentidos.</h2><p>Quem trouxe a garrafa preenche o gabarito. Ele ficará protegido até a hora da correção.</p></div><span class="phase-pill">Só o dono</span></div>
+  return `<article class="round-card"><div class="phase-header"><div><div class="section-label">Etapa de preparação</div><h2>Feche o rótulo. Abra os sentidos.</h2><p>Quem trouxe a garrafa preenche o gabarito completo. Os convidados só verão os palpites depois da revelação.</p></div><span class="phase-pill">Só o dono</span></div>
     <div class="key-owner"><div><label class="form-label" for="owner-select">Quem trouxe esta garrafa?</label><p class="muted" style="font-size:12px;margin:0">Essa pessoa será a última coluna e não pontua na rodada.</p></div><select id="owner-select" class="select-input" data-owner>${state.participants.map(person => `<option value="${person.id}" ${person.id === round.ownerId ? 'selected' : ''}>${esc(person.name)}</option>`).join('')}</select></div>
     <div class="key-groups">${FIELD_GROUPS.map(group => renderKeyGroup(round, group)).join('')}</div>
+    ${renderLabelKeySection(round)}
     <div class="round-actions"><div class="left-actions"><button class="secondary-button" data-action="go-home">Sair sem salvar</button></div><div class="right-actions"><button class="primary-button" data-action="to-blind">Gabarito preenchido · começar às cegas <span aria-hidden="true">→</span></button></div></div>
-    <p class="save-note">O andamento desta rodada é salvo automaticamente neste dispositivo. Você pode atualizar a página sem perder o que já preencheu.</p>
+    <p class="save-note">Nome do rótulo e produtor ficam guardados como referência. País, região, sub-região, safra, álcool, uvas e classificação entram na pontuação.</p>
   </article>`;
 }
 
@@ -298,9 +406,31 @@ function renderKeyGroup(round, group) {
   return `<section><div class="key-group-title"><h3>${group.label}</h3><span>${group.short}</span></div><div class="key-fields">${group.fields.map(field => `<label class="key-field"><span>${field.label}</span>${selectFor(field, round.answerKey[field.key], { scope: 'key', field: field.key })}</label>`).join('')}</div></section>`;
 }
 
+function renderLabelKeySection(round) {
+  return `<section class="label-key-section"><div class="key-group-title"><div><h3>Ficha do rótulo · gabarito</h3><p>O dono preenche agora. Os participantes respondem depois que a garrafa for revelada.</p></div><span>7 critérios</span></div><div class="label-form-grid key-label-grid">${LABEL_FIELDS.map(field => `<label class="label-field ${['producer', 'wineName', 'grapes'].includes(field.key) ? 'wide' : ''}"><span>${esc(field.label)}${field.scored ? '' : ' · referência'}</span>${renderLabelKeyControl(field, round.labelInfo[field.key])}</label>`).join('')}</div></section>`;
+}
+
+function renderLabelKeyControl(field, value) {
+  if (field.type === 'multi') return renderMultiPicker(field, value, 'label-key');
+  if (field.type === 'select') return `<select class="answer-select label-input" data-label-key data-field="${field.key}"><option value="">Escolher…</option>${field.options.map(option => `<option value="${esc(option)}" ${option === value ? 'selected' : ''}>${esc(option)}</option>`).join('')}</select>`;
+  return `<input class="input label-input" data-label-key data-field="${field.key}" type="${field.type}" ${field.step ? `step="${field.step}"` : ''} ${field.min ? `min="${field.min}"` : ''} ${field.max ? `max="${field.max}"` : ''} value="${esc(value || '')}" placeholder="${esc(field.placeholder || '')}" />`;
+}
+
 function selectFor(field, value, meta = {}) {
   const attrs = `data-answer data-scope="${meta.scope || 'player'}" data-field="${field.key}"${meta.participant ? ` data-participant="${meta.participant}"` : ''}`;
   return `<select class="answer-select" ${attrs}><option value="">Escolher…</option>${field.options.map(option => `<option value="${esc(option)}" ${option === value ? 'selected' : ''}>${esc(option)}</option>`).join('')}</select>`;
+}
+
+function labelSelectFor(field, value, participantId) {
+  return `<select class="answer-select" data-label-answer data-field="${field.key}" data-participant="${participantId}"><option value="">Escolher…</option>${field.options.map(option => `<option value="${esc(option)}" ${option === value ? 'selected' : ''}>${esc(option)}</option>`).join('')}</select>`;
+}
+
+function renderMultiPicker(field, selected = [], scope, participantId = '') {
+  const selectedValues = normalizeMulti(selected);
+  const isGuess = scope === 'label-answer';
+  const attribute = isGuess ? `data-label-answer data-field="${field.key}" data-participant="${participantId}"` : `data-label-key data-field="${field.key}"`;
+  const selectedText = selectedValues.length ? `${selectedValues.length} selecionada${selectedValues.length === 1 ? '' : 's'}` : 'Escolher uvas…';
+  return `<div class="multi-picker" data-multi-picker><details class="multi-details"><summary><span data-multi-summary>${esc(selectedText)}</span><span aria-hidden="true">⌄</span></summary><div class="multi-menu">${field.options.map(option => `<label class="multi-option"><input type="checkbox" ${attribute} data-multi-value="${esc(option)}" ${selectedValues.includes(option) ? 'checked' : ''}><span>${esc(option)}</span></label>`).join('')}</div></details></div>`;
 }
 
 function renderBlindStep(round) {
@@ -308,28 +438,11 @@ function renderBlindStep(round) {
 }
 
 function renderVisualStep(round) {
-  return `<article class="round-card"><div class="phase-header"><div><div class="section-label">Etapa 2 · depois da revelação</div><h2>Agora, olhem a taça.</h2><p>Tirem as vendas e registrem cor, limpidez e intensidade visual.</p></div><span class="phase-pill">Revelado</span></div><div class="reveal-banner"><span class="reveal-icon">✦</span><span><strong>Rótulo revelado.</strong> Continuem a análise usando a luz e a cor do vinho.</span></div>${renderBoard(round, 'visual', false)}<div class="round-actions"><div class="left-actions"><button class="secondary-button" data-action="back-blind">← Voltar aos palpites</button></div><div class="right-actions"><button class="primary-button" data-action="to-label">Registrar ficha do rótulo <span aria-hidden="true">→</span></button></div></div></article>`;
+  return `<article class="round-card"><div class="phase-header"><div><div class="section-label">Etapa 2 · depois das vendas</div><h2>Agora, olhem a taça.</h2><p>Tirem as vendas e registrem cor, limpidez e intensidade visual.</p></div><span class="phase-pill">Visual</span></div><div class="reveal-banner"><span class="reveal-icon">✦</span><span><strong>A garrafa ainda fica escondida.</strong> Usem a luz e a cor do vinho, mas segurem a revelação do rótulo.</span></div>${renderBoard(round, 'visual', false)}<div class="round-actions"><div class="left-actions"><button class="secondary-button" data-action="back-blind">← Voltar aos palpites</button></div><div class="right-actions"><button class="primary-button" data-action="to-label">Adivinhar o rótulo <span aria-hidden="true">→</span></button></div></div></article>`;
 }
 
 function renderLabelStep(round) {
-  const info = { ...emptyLabelInfo(), ...(round.labelInfo || {}) };
-  return `<article class="round-card"><div class="phase-header"><div><div class="section-label">Etapa 3 · ficha da garrafa</div><h2>Agora, o rótulo conta a história.</h2><p>Registrem as informações da garrafa para lembrar da descoberta depois. Esta ficha não altera a pontuação.</p></div><span class="phase-pill">Rótulo</span></div><div class="reveal-banner"><span class="reveal-icon">⌁</span><span><strong>Dados do rótulo.</strong> Preencha o que fizer sentido; campos sem informação podem ficar em branco.</span></div><div class="label-form-grid">${LABEL_FIELDS.map(field => `<label class="label-field ${['producer', 'wineName', 'grapes'].includes(field.key) ? 'wide' : ''}"><span>${esc(field.label)}</span>${renderLabelControl(field, info[field.key])}</label>`).join('')}</div><div class="round-actions"><div class="left-actions"><button class="secondary-button" data-action="back-visual">← Voltar ao visual</button></div><div class="right-actions"><button class="primary-button" data-action="to-results">Ver resultado da rodada <span aria-hidden="true">→</span></button></div></div><p class="save-note">A ficha é salva junto da rodada e aparece no histórico. Você pode deixar campos em branco quando o rótulo não trouxer a informação.</p></article>`;
-}
-
-function renderLabelControl(field, value) {
-  if (field.type === 'select') {
-    return `<select class="answer-select label-input" data-label data-field="${field.key}"><option value="">Escolher…</option>${field.options.map(option => `<option value="${esc(option)}" ${option === value ? 'selected' : ''}>${esc(option)}</option>`).join('')}</select>`;
-  }
-  return `<input class="input label-input" data-label data-field="${field.key}" type="${field.type}" ${field.inputmode ? `inputmode="${field.inputmode}"` : ''} ${field.step ? `step="${field.step}"` : ''} ${field.min ? `min="${field.min}"` : ''} ${field.max ? `max="${field.max}"` : ''} value="${esc(value || '')}" placeholder="${esc(field.placeholder || '')}" />`;
-}
-
-function hasLabelInfo(info) {
-  return Object.values(info || {}).some(value => String(value || '').trim());
-}
-
-function renderLabelSnapshot(info) {
-  if (!hasLabelInfo(info)) return `<div class="label-empty"><strong>Ficha do rótulo ainda vazia.</strong><span>A rodada pode ser salva mesmo assim; complete a ficha na próxima taça.</span></div>`;
-  return `<section class="label-snapshot"><div><div class="section-label">Ficha do rótulo</div><h3>${esc(info.wineName || info.producer || 'Garrafa revelada')}</h3>${info.producer && info.wineName ? `<p>${esc(info.producer)}</p>` : ''}</div><div class="label-chips">${LABEL_FIELDS.filter(field => info[field.key] && field.key !== 'wineName' && field.key !== 'producer').map(field => `<span class="label-chip"><small>${esc(field.label)}</small>${esc(field.key === 'alcohol' ? `${info[field.key]}%` : info[field.key])}</span>`).join('')}</div></section>`;
+  return `<article class="round-card"><div class="phase-header"><div><div class="section-label">Etapa 3 · ficha do rótulo</div><h2>O que vocês acham que está no rótulo?</h2><p>Antes de revelar a garrafa, cada participante registra seu próprio palpite. Nome do rótulo e produtor ficam fora da pontuação.</p></div><span class="phase-pill">Cada participante</span></div><div class="reveal-banner"><span class="reveal-icon">⌁</span><span><strong>Hora de marcar.</strong> País, região, sub-região, safra, álcool, uvas e classificação valem pontos; revelem a garrafa só na correção.</span></div>${renderLabelBoard(round)}<div class="round-actions"><div class="left-actions"><button class="secondary-button" data-action="back-visual">← Voltar ao visual</button></div><div class="right-actions"><button class="primary-button" data-action="to-results">Revelar e mostrar resultado <span aria-hidden="true">→</span></button></div></div><p class="save-note">Use “Outra / corte não sei” quando não quiser arriscar uma casta específica. Para as uvas, marque quantas achar necessário.</p></article>`;
 }
 
 function renderBoard(round, groupKey, showKey) {
@@ -338,30 +451,85 @@ function renderBoard(round, groupKey, showKey) {
   return `<div class="board-wrap"><div class="board-scroll"><table class="score-grid"><thead><tr><th scope="col">Critério</th>${eligible.map(person => `<th scope="col" class="player-head">${esc(person.name)}<small>palpite</small></th>`).join('')}<th scope="col" class="key-head">Gabarito<small>${esc(participantName(round.ownerId))}</small></th></tr></thead><tbody>${group.fields.map(field => `<tr><th scope="row">${field.label}<small>${field.options.length} opções</small></th>${eligible.map(person => `<td>${selectFor(field, round.answers[person.id]?.[field.key] || '', { scope: 'player', field: field.key, participant: person.id })}</td>`).join('')}<td class="key-cell">${showKey ? renderKeyValue(round.answerKey[field.key]) : '<span class="hidden-key">oculto</span>'}</td></tr>`).join('')}</tbody></table></div></div><p class="board-help">Dica: deslize a tabela para o lado no celular. Cada célula é um seletor rápido.</p>`;
 }
 
+function renderLabelBoard(round) {
+  const eligible = getEligibleParticipants(round);
+  return `<div class="board-wrap label-board"><div class="board-scroll"><table class="score-grid"><thead><tr><th scope="col">Característica</th>${eligible.map(person => `<th scope="col" class="player-head">${esc(person.name)}<small>palpite</small></th>`).join('')}<th scope="col" class="key-head">Gabarito<small>oculto até a correção</small></th></tr></thead><tbody>${LABEL_SCORE_FIELDS.map(field => `<tr><th scope="row">${esc(field.label)}<small>${field.key === 'grapes' ? 'marque várias' : field.key === 'alcohol' ? 'faixa aproximada' : 'uma opção'}</small></th>${eligible.map(person => `<td>${renderLabelGuessControl(field, round.labelAnswers[person.id]?.[field.key], person.id)}</td>`).join('')}<td class="key-cell"><span class="hidden-key">oculto</span></td></tr>`).join('')}</tbody></table></div></div><p class="board-help">As opções de região, sub-região e uvas já estão prontas para marcar. Deslize a tabela horizontalmente no iPad ou celular.</p>`;
+}
+
+function renderLabelGuessControl(field, value, participantId) {
+  if (field.key === 'alcohol') {
+    const guessField = { ...field, type: 'select', options: WINE_ALCOHOL_BANDS };
+    return labelSelectFor(guessField, value, participantId);
+  }
+  if (field.type === 'multi') return renderMultiPicker(field, value, 'label-answer', participantId);
+  return labelSelectFor(field, value, participantId);
+}
+
 function renderKeyValue(value) {
-  return value ? `<span class="key-value">${esc(value)}<span>resposta certa</span></span>` : '<span class="hidden-key">não preenchido</span>';
+  return value ? `<span class="key-value">${esc(displayValue(value))}<span>resposta certa</span></span>` : '<span class="hidden-key">não preenchido</span>';
+}
+
+function renderLabelSnapshot(info) {
+  const normalized = normalizeLabelInfo(info);
+  const title = normalized.wineName || normalized.producer || 'Garrafa revelada';
+  const chips = LABEL_FIELDS.filter(field => normalized[field.key] && field.key !== 'wineName' && field.key !== 'producer').map(field => `<span class="label-chip"><small>${esc(field.label)}</small>${esc(field.key === 'alcohol' ? `${normalized[field.key]}%` : displayValue(normalized[field.key]))}</span>`).join('');
+  if (!hasLabelInfo(normalized)) return `<div class="label-empty"><strong>Ficha do rótulo ainda vazia.</strong><span>O dono pode completar as informações na próxima rodada.</span></div>`;
+  return `<section class="label-snapshot"><div><div class="section-label">Ficha do rótulo</div><h3>${esc(title)}</h3>${normalized.producer && normalized.wineName ? `<p>${esc(normalized.producer)}</p>` : ''}</div><div class="label-chips">${chips}</div></section>`;
+}
+
+function hasLabelInfo(info) {
+  return LABEL_FIELDS.some(field => field.type === 'multi' ? Array.isArray(info[field.key]) && info[field.key].length : String(info[field.key] || '').trim());
 }
 
 function renderResultsStep(round) {
   const result = calculateRound(round);
   const winner = [...result.scores].sort((a, b) => b.score - a.score)[0];
-  return `<article class="round-card"><div class="result-hero"><div class="eyebrow">Etapa 5 · hora da verdade</div><h2>${winner ? `${esc(winner.name)} puxou a fila.` : 'A mesa chegou ao veredito.'}</h2><p>${winner ? `${winner.score} acerto${winner.score === 1 ? '' : 's'} em ${winner.max} critérios. Agora é só salvar a rodada.` : 'Confira os palpites antes de registrar o resultado.'}</p></div>${renderLabelSnapshot(round.labelInfo || {})}<div class="result-cards">${result.scores.map(score => `<div class="result-card ${winner && score.id === winner.id ? 'leader' : ''}"><div class="result-name">${esc(score.name)}</div><div class="result-points">${score.score}<small>/${score.max}</small></div><div class="result-status">${Math.round((score.score / score.max) * 100)}% de acerto</div></div>`).join('')}</div><div class="detail-block">${result.scores.map(score => renderDetailPerson(score)).join('')}</div><div class="round-actions"><div class="left-actions"><button class="secondary-button" data-action="back-label">← Revisar ficha</button></div><div class="right-actions"><button class="primary-button" data-action="save-round">Salvar rodada e iniciar próxima <span aria-hidden="true">→</span></button></div></div></article>`;
+  return `<article class="round-card"><div class="result-hero"><div class="eyebrow">Etapa 5 · hora da verdade</div><h2>${winner ? `${esc(winner.name)} puxou a fila.` : 'A mesa chegou ao veredito.'}</h2><p>${winner ? `${winner.score} acerto${winner.score === 1 ? '' : 's'} em ${winner.max} critérios. Agora é só salvar a rodada.` : 'Confira os palpites antes de registrar o resultado.'}</p></div>${renderLabelSnapshot(round.labelInfo || {})}<div class="result-cards">${result.scores.map(score => `<div class="result-card ${winner && score.id === winner.id ? 'leader' : ''}"><div class="result-name">${esc(score.name)}</div><div class="result-points">${score.score}<small>/${score.max}</small></div><div class="result-status">${Math.round((score.score / score.max) * 100)}% de acerto</div></div>`).join('')}</div><div class="detail-block">${result.scores.map(score => renderDetailPerson(score)).join('')}</div><div class="round-actions"><div class="left-actions"><button class="secondary-button" data-action="back-label">← Revisar palpites</button></div><div class="right-actions"><button class="primary-button" data-action="save-round">Salvar rodada e iniciar próxima <span aria-hidden="true">→</span></button></div></div></article>`;
+}
+
+function alcoholBandMatches(guessBand, correctAlcohol) {
+  const value = Number(String(correctAlcohol).replace(',', '.'));
+  if (!guessBand || !Number.isFinite(value)) return false;
+  if (guessBand.startsWith('Até')) return value < 12;
+  if (guessBand.startsWith('12')) return value >= 12 && value < 13;
+  if (guessBand.startsWith('13')) return value >= 13 && value < 14;
+  if (guessBand.startsWith('14')) return value >= 14 && value < 16;
+  if (guessBand.startsWith('16')) return value >= 16;
+  return false;
+}
+
+function sameMulti(left, right) {
+  const a = normalizeMulti(left).map(item => item.toLocaleLowerCase()).sort();
+  const b = normalizeMulti(right).map(item => item.toLocaleLowerCase()).sort();
+  return a.length > 0 && a.length === b.length && a.every((item, index) => item === b[index]);
+}
+
+function labelAnswerCorrect(key, answer, correct) {
+  if (key === 'grapes') return sameMulti(answer, correct);
+  if (key === 'alcohol') return alcoholBandMatches(answer, correct);
+  return Boolean(answer) && answer === correct;
 }
 
 function calculateRound(round) {
   const scores = getEligibleParticipants(round).map(person => {
-    const details = ALL_FIELDS.map(field => {
+    const blindDetails = ALL_FIELDS.map(field => {
       const answer = round.answers[person.id]?.[field.key] || '';
       const correctAnswer = round.answerKey[field.key] || '';
       return { fieldKey: field.key, label: field.label, answer, correctAnswer, isCorrect: answer !== '' && answer === correctAnswer };
     });
+    const labelDetails = LABEL_SCORE_FIELDS.map(field => {
+      const answer = round.labelAnswers?.[person.id]?.[field.key] || (field.type === 'multi' ? [] : '');
+      const correctAnswer = round.labelInfo?.[field.key] || (field.type === 'multi' ? [] : '');
+      return { fieldKey: `label_${field.key}`, label: field.label, answer, correctAnswer, isCorrect: labelAnswerCorrect(field.key, answer, correctAnswer) };
+    });
+    const details = [...blindDetails, ...labelDetails];
     return { id: person.id, name: person.name, score: details.filter(item => item.isCorrect).length, max: details.length, details };
   });
   return { scores };
 }
 
 function renderDetailPerson(score) {
-  return `<section class="detail-person"><div class="detail-person-head"><strong>${esc(score.name)}</strong><span>${score.score}/${score.max}</span></div><div class="detail-grid">${score.details.map(detail => `<div class="detail-item ${detail.isCorrect ? 'correct' : 'wrong'}"><strong>${detail.isCorrect ? '✓' : '×'} ${esc(FIELD_BY_KEY[detail.fieldKey].short)}</strong><span title="${esc(detail.answer || 'Sem resposta')}">${esc(detail.answer || 'Sem resposta')}</span></div>`).join('')}</div></section>`;
+  return `<section class="detail-person"><div class="detail-person-head"><strong>${esc(score.name)}</strong><span>${score.score}/${score.max}</span></div><div class="detail-grid">${score.details.map(detail => `<div class="detail-item ${detail.isCorrect ? 'correct' : 'wrong'}"><strong>${detail.isCorrect ? '✓' : '×'} ${esc(DETAIL_FIELDS[detail.fieldKey]?.short || detail.label)}</strong><span title="${esc(displayValue(detail.answer))}">${esc(displayValue(detail.answer))}</span></div>`).join('')}</div></section>`;
 }
 
 function renderHistoryPage() {
@@ -372,7 +540,7 @@ function renderHistoryPage() {
 function renderReviewPage() {
   const round = state.history.find(item => item.id === reviewId);
   if (!round) return renderHistoryPage();
-  return `<section class="review-head"><div><div class="eyebrow">Rodada ${round.number} · revisão</div><h1>O que a taça revelou.</h1><p>Gabarito de <strong>${esc(round.ownerName)}</strong> · ${formatDate(round.finishedAt)}</p></div><button class="secondary-button" data-action="open-history">← Voltar ao histórico</button></section><section class="panel">${renderLabelSnapshot(round.labelInfo || {})}<div class="section-label">Gabarito oficial</div><h2>Respostas da garrafa</h2><div class="review-key">${ALL_FIELDS.map(field => `<div class="review-key-item"><small>${esc(field.short)}</small><strong>${esc(round.answerKey[field.key] || 'Sem resposta')}</strong></div>`).join('')}</div>${(round.scores || []).map(score => renderDetailPerson(score)).join('')}</section>`;
+  return `<section class="review-head"><div><div class="eyebrow">Rodada ${round.number} · revisão</div><h1>O que a taça revelou.</h1><p>Gabarito de <strong>${esc(round.ownerName)}</strong> · ${formatDate(round.finishedAt)}</p></div><button class="secondary-button" data-action="open-history">← Voltar ao histórico</button></section><section class="panel">${renderLabelSnapshot(round.labelInfo || {})}<div class="section-label">Gabarito sensorial</div><h2>Respostas da garrafa</h2><div class="review-key">${ALL_FIELDS.map(field => `<div class="review-key-item"><small>${esc(field.short)}</small><strong>${esc(round.answerKey[field.key] || 'Sem resposta')}</strong></div>`).join('')}</div><div class="section-label">Gabarito do rótulo</div><div class="review-key">${LABEL_SCORE_FIELDS.map(field => `<div class="review-key-item"><small>${esc(field.short)}</small><strong>${esc(displayValue(round.labelInfo[field.key]))}</strong></div>`).join('')}</div>${(round.scores || []).map(score => renderDetailPerson(score)).join('')}</section>`;
 }
 
 function isComplete(round, scope, participantId = null) {
@@ -385,8 +553,23 @@ function allParticipantsComplete(round, scope) {
   return getEligibleParticipants(round).every(person => isComplete(round, scope, person.id));
 }
 
+function completeLabelKey(round) {
+  return LABEL_SCORE_FIELDS.every(field => {
+    const value = round.labelInfo?.[field.key];
+    if (field.type === 'multi') return Array.isArray(value) && value.length > 0;
+    return Boolean(value);
+  });
+}
+
 function completeKey(round) {
-  return ALL_FIELDS.every(field => round.answerKey[field.key]);
+  return ALL_FIELDS.every(field => round.answerKey[field.key]) && completeLabelKey(round);
+}
+
+function allLabelAnswersComplete(round) {
+  return getEligibleParticipants(round).every(person => LABEL_SCORE_FIELDS.every(field => {
+    const value = round.labelAnswers?.[person.id]?.[field.key];
+    return field.type === 'multi' ? Array.isArray(value) && value.length > 0 : Boolean(value);
+  }));
 }
 
 function goToStep(step) {
@@ -414,6 +597,13 @@ function saveRound() {
   showToast('Rodada salva. A mesa está pronta para a próxima.', 'success');
 }
 
+function updateMultiSummary(details) {
+  if (!details) return;
+  const checked = [...details.querySelectorAll('input[type="checkbox"]:checked')];
+  const summary = details.querySelector('[data-multi-summary]');
+  if (summary) summary.textContent = checked.length ? `${checked.length} selecionada${checked.length === 1 ? '' : 's'}` : 'Escolher uvas…';
+}
+
 function bindEvents() {
   const app = document.querySelector('#app');
   if (!app) return;
@@ -438,17 +628,40 @@ function handleChange(event) {
   const target = event.target;
   if (target.matches('[data-owner]') && state.currentRound) {
     const oldAnswers = state.currentRound.answers || {};
+    const oldLabelAnswers = state.currentRound.labelAnswers || {};
     state.currentRound.ownerId = target.value;
     state.currentRound.answers = Object.fromEntries(getEligibleParticipants(state.currentRound).map(person => [person.id, oldAnswers[person.id] || emptyAnswers()]));
+    state.currentRound.labelAnswers = Object.fromEntries(getEligibleParticipants(state.currentRound).map(person => [person.id, oldLabelAnswers[person.id] || emptyLabelAnswers()]));
     saveState();
     render();
     showToast(`${participantName(target.value)} agora guarda o gabarito.`);
     return;
   }
-  if (target.matches('[data-label]') && state.currentRound) {
-    state.currentRound.labelInfo ||= emptyLabelInfo();
-    state.currentRound.labelInfo[target.dataset.field] = target.value;
+  if (target.matches('[data-label-key]') && state.currentRound) {
+    const field = target.dataset.field;
+    if (target.dataset.multiValue) {
+      const current = normalizeMulti(state.currentRound.labelInfo[field]);
+      state.currentRound.labelInfo[field] = target.checked ? [...new Set([...current, target.dataset.multiValue])] : current.filter(value => value !== target.dataset.multiValue);
+      updateMultiSummary(target.closest('.multi-details'));
+    } else {
+      state.currentRound.labelInfo[field] = target.value;
+    }
     saveState();
+    return;
+  }
+  if (target.matches('[data-label-answer]') && state.currentRound) {
+    const participantId = target.dataset.participant;
+    const field = target.dataset.field;
+    state.currentRound.labelAnswers[participantId] ||= emptyLabelAnswers();
+    if (target.dataset.multiValue) {
+      const current = normalizeMulti(state.currentRound.labelAnswers[participantId][field]);
+      state.currentRound.labelAnswers[participantId][field] = target.checked ? [...new Set([...current, target.dataset.multiValue])] : current.filter(value => value !== target.dataset.multiValue);
+      updateMultiSummary(target.closest('.multi-details'));
+    } else {
+      state.currentRound.labelAnswers[participantId][field] = target.value;
+    }
+    saveState();
+    refreshRoundStatus();
     return;
   }
   if (!target.matches('[data-answer]') || !state.currentRound) return;
@@ -466,11 +679,15 @@ function refreshRoundStatus() {
   const eligible = getEligibleParticipants(round);
   const blind = countCompleted(round, 'blind');
   const visual = countCompleted(round, 'visual');
+  const label = countLabelCompleted(round);
   const meters = document.querySelectorAll('.status-meter i');
   if (meters[0]) meters[0].style.width = `${eligible.length ? Math.round((blind / eligible.length) * 100) : 0}%`;
   if (meters[1]) meters[1].style.width = `${eligible.length ? Math.round((visual / eligible.length) * 100) : 0}%`;
-  const status = document.querySelector('.status-line strong');
-  if (status && round.step !== 'key') status.textContent = `${blind}/${eligible.length}`;
+  if (meters[2]) meters[2].style.width = `${eligible.length ? Math.round((label / eligible.length) * 100) : 0}%`;
+  const statuses = document.querySelectorAll('.status-line strong');
+  if (statuses[0] && round.step !== 'key') statuses[0].textContent = `${blind}/${eligible.length}`;
+  if (statuses[1] && ['visual', 'label', 'results'].includes(round.step)) statuses[1].textContent = `${visual}/${eligible.length}`;
+  if (statuses[2] && ['label', 'results'].includes(round.step)) statuses[2].textContent = `${label}/${eligible.length}`;
 }
 
 function handleClick(event) {
@@ -494,7 +711,7 @@ function handleClick(event) {
   if (action === 'move-participant') { moveParticipant(id, actionElement.dataset.direction); return; }
   if (action === 'remove-participant') { removeParticipant(id); return; }
   if (action === 'to-blind') {
-    if (!completeKey(state.currentRound)) { showToast('Preencha todas as respostas do gabarito antes de começar.', 'error'); return; }
+    if (!completeKey(state.currentRound)) { showToast('Preencha todo o gabarito sensorial e a ficha do rótulo antes de começar.', 'error'); return; }
     goToStep('blind'); return;
   }
   if (action === 'back-key') { goToStep('key'); return; }
@@ -504,10 +721,13 @@ function handleClick(event) {
   }
   if (action === 'back-blind') { goToStep('blind'); return; }
   if (action === 'to-label') {
-    if (!allParticipantsComplete(state.currentRound, 'visual')) { showToast('Complete a análise visual de todos antes de revelar a ficha.', 'error'); return; }
+    if (!allParticipantsComplete(state.currentRound, 'visual')) { showToast('Complete a análise visual de todos antes de abrir o rótulo.', 'error'); return; }
     goToStep('label'); return;
   }
-  if (action === 'to-results') { goToStep('results'); return; }
+  if (action === 'to-results') {
+    if (!allLabelAnswersComplete(state.currentRound)) { showToast('Complete os palpites do rótulo de todos antes de corrigir.', 'error'); return; }
+    goToStep('results'); return;
+  }
   if (action === 'back-visual') { goToStep('visual'); return; }
   if (action === 'back-label') { goToStep('label'); return; }
   if (action === 'save-round') { saveRound(); return; }

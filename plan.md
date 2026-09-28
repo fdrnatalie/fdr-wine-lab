@@ -22,8 +22,8 @@ Um SPA estático, em português do Brasil, para conduzir rodadas de degustação
 2. Gabarito: escolher dono da garrafa e preencher respostas oficiais.
 3. Etapa às cegas: cada participante elegível responde nariz, boca e tipo sem ver o rótulo.
 4. Revelação: liberar a etapa visual e registrar cor, limpidez e intensidade visual.
-5. Ficha do rótulo: registrar produtor, vinho, país, região, sub-região/denominação, safra, teor alcoólico, uvas e classificação sem afetar o placar.
-6. Resultado: comparar respostas com o gabarito, mostrar acertos/erros, salvar a rodada e atualizar o ranking.
+5. Ficha do rótulo: o dono registra produtor, vinho, país, região, sub-região/denominação, safra, teor alcoólico, uvas e classificação no gabarito; cada participante palpite país, região, sub-região, safra, faixa de teor alcoólico, uvas e classificação antes de a garrafa ser revelada.
+6. Resultado: comparar respostas sensoriais e os sete palpites pontuáveis do rótulo com o gabarito, mostrar acertos/erros, salvar a rodada e atualizar o ranking.
 7. Histórico: revisar rodadas, consultar a ficha da garrafa, excluir uma rodada ou reiniciar todo o jogo com confirmação.
 
 ## Critérios de aceite
@@ -31,7 +31,7 @@ Um SPA estático, em português do Brasil, para conduzir rodadas de degustação
 - O gabarito é a última coluna e o dono não pontua na própria rodada.
 - A pontuação acumulada aparece por participante e por rodada.
 - Rodadas salvas sobrevivem a refresh e podem ser excluídas.
-- A ficha do rótulo fica salva junto da rodada e aparece na revisão do histórico.
+- A ficha do rótulo fica salva junto da rodada e aparece na revisão do histórico; produtor e nome são referência, enquanto país, região, sub-região, safra, álcool, uvas e classificação somam pontos.
 - O layout é usável em telas estreitas, com contraste e alvos de toque grandes.
 - O manifesto de rotas responde 200 com JSON válido.
 
