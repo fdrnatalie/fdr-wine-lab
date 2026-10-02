@@ -269,7 +269,7 @@ function appHeader() {
   return `<header class="app-header">
     <a class="brand" href="#" data-action="go-home" aria-label="Voltar ao início">
       <img class="brand-mark" src="/vinhocego-icon.png" alt="" />
-      <span class="brand-copy"><span class="brand-name">Vinho às Cegas</span><span class="brand-tag">${activeLabel}</span></span>
+      <span class="brand-copy"><span class="brand-name">FDR Wine Lab</span><span class="brand-tag">${activeLabel}</span></span>
     </a>
     <div class="header-actions">
       ${state.history.length ? `<button class="ghost-button" data-action="open-history">Histórico <span aria-hidden="true">↗</span></button>` : ''}
@@ -299,7 +299,7 @@ function renderHomePage() {
     <article class="hero-card">
       <div class="hero-lockup">
         <div class="hero-copy">
-          <div class="eyebrow">Degustação guiada</div>
+          <div class="eyebrow">FDR Wine Lab · Degustação guiada</div>
           <h1>Descubram o vinho,<br><em>sem olhar.</em></h1>
           <p class="lede">Um painel simples para registrar palpites, revelar o rótulo e descobrir quem tem o melhor paladar da mesa.</p>
         </div>

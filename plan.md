@@ -1,7 +1,7 @@
-# Plano — Vinho às Cegas
+# Plano — FDR Wine Lab · Degustação às Cegas
 
 ## Resultado
-Um SPA estático, em português do Brasil, para conduzir rodadas de degustação às cegas no celular. Todo o estado é salvo no `localStorage`; não há login, servidor, banco ou dependência de internet para a lógica do jogo.
+Um SPA estático, em português do Brasil, para conduzir rodadas de degustação às cegas no celular sob a marca FDR Wine Lab. Todo o estado é salvo no `localStorage`; não há login, servidor, banco ou dependência de internet para a lógica do jogo.
 
 ## Arquitetura de entrega
 - **Serviço:** frontend estático, servido pelo processo de desenvolvimento na porta 3000 e publicado a partir de `dist/`; a busca opcional consulta diretamente a API pública do Open Food Facts no navegador e mantém preenchimento manual como fallback.
@@ -16,6 +16,11 @@ Um SPA estático, em português do Brasil, para conduzir rodadas de degustação
 - `public/manus-routes.json`: manifesto da rota raiz.
 - `public/vinhocego-icon.png` e `public/favicon.svg`: identidade/favicons.
 - `app.config.ts`: metadado de logo do projeto.
+
+## Marca
+- **Marca-mãe e créditos do aplicativo:** FDR Wine Lab.
+- **Nome funcional do produto:** Degustação às Cegas.
+- **Assinatura de tela:** “FDR Wine Lab · Degustação guiada”.
 
 ## Fluxo do produto
 1. Configuração: cadastrar participantes e iniciar a primeira rodada.

@@ -1,4 +1,4 @@
-# Direção de design — Vinho às Cegas
+# Direção de design — FDR Wine Lab · Degustação às Cegas
 
 ## Exploração inicial
 
@@ -45,13 +45,13 @@ Transições curtas de 160–220ms para troca de etapa, atualização do placar 
 Títulos em **DM Serif Display** para a sensação de ritual; corpo e controles em **DM Sans** para leitura rápida. Fallbacks serif/sans-serif mantêm a identidade sem depender da rede.
 
 ### Essência de marca
-Uma mesa entre amigos, um pouco de teatro e uma forma leve de aprender vinho.
+FDR Wine Lab transforma uma mesa entre amigos em uma forma leve de aprender vinho, com um pouco de teatro e curiosidade científica.
 
 ### Voz da marca
 Direta, cúmplice e encorajadora: “vamos descobrir”, “sem olhar”, “agora revela”. Evita jargão desnecessário.
 
 ### Wordmark/logo
-Ícone quadrado de fundo ameixa cheio, com uma forma de olho em coral e uma taça marfim no espaço negativo. A mesma marca aparece no cabeçalho e no favicon.
+Wordmark “FDR Wine Lab” com o ícone quadrado de fundo ameixa, olho coral e taça marfim no espaço negativo. A experiência mantém “Degustação às Cegas” como nome funcional.
 
 ### Cor de assinatura
 **Ameixa de adega `#2A1724`**, usada como base e identificação principal do produto.
