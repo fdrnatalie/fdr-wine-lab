@@ -4,10 +4,11 @@
 Um SPA estático, em português do Brasil, para conduzir rodadas de degustação às cegas no celular sob a marca FDR Wine Lab. Todo o estado é salvo no `localStorage`; não há login, servidor, banco ou dependência de internet para a lógica do jogo.
 
 ## Arquitetura de entrega
-- **Serviço:** frontend estático, servido pelo processo de desenvolvimento na porta 3000 e publicado a partir de `dist/`; a busca opcional consulta diretamente a API pública do Open Food Facts no navegador e mantém preenchimento manual como fallback.
+- **Serviço:** frontend estático, servido pelo processo de desenvolvimento na porta 3000 e publicado a partir de `dist/`; uma cópia de `dist/` é publicada no branch `gh-pages` para GitHub Pages. A busca opcional consulta diretamente a API pública do Open Food Facts no navegador e mantém preenchimento manual como fallback.
 - **Rotas:** apenas `/`, com fallback de SPA para a publicação; `GET /manus-routes.json` é o manifesto exigido.
 - **Cache:** HTML e estado da aplicação permanecem mutáveis; assets locais podem ser servidos como arquivos normais.
 - **Persistência:** `localStorage` com versão (`vinhocego-state-v1`), com migração defensiva para estado inicial.
+- **Portabilidade:** referências a CSS, JavaScript, favicon e ícones usam caminhos relativos, para que o app carregue tanto no domínio próprio quanto na subpasta do GitHub Pages.
 
 ## Estrutura
 - `index.html`: shell acessível, marca, containers de telas e carregamento dos estilos/scripts.

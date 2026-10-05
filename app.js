@@ -268,7 +268,7 @@ function appHeader() {
   const activeLabel = state.currentRound ? `Rodada ${state.currentRound.number}` : state.history.length ? `${state.history.length} rodada${state.history.length === 1 ? '' : 's'}` : 'Preparação';
   return `<header class="app-header">
     <a class="brand" href="#" data-action="go-home" aria-label="Voltar ao início">
-      <img class="brand-mark" src="/vinhocego-icon.png" alt="" />
+      <img class="brand-mark" src="vinhocego-icon.png" alt="" />
       <span class="brand-copy"><span class="brand-name">FDR Wine Lab</span><span class="brand-tag">${activeLabel}</span></span>
     </a>
     <div class="header-actions">
@@ -303,7 +303,7 @@ function renderHomePage() {
           <h1>Descubram o vinho,<br><em>sem olhar.</em></h1>
           <p class="lede">Um painel simples para registrar palpites, revelar o rótulo e descobrir quem tem o melhor paladar da mesa.</p>
         </div>
-        <img class="hero-symbol" src="/vinhocego-icon.png" alt="Olho estilizado envolvendo uma taça de vinho" />
+        <img class="hero-symbol" src="vinhocego-icon.png" alt="Olho estilizado envolvendo uma taça de vinho" />
       </div>
     </article>
     <article class="setup-card">
